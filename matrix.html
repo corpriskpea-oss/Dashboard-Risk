@@ -2,27 +2,20 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Enterprise Risk Dashboard – v3.03.2 (Matrix)</title>
+<title>Enterprise Risk Dashboard – v3.03.4 (Matrix)</title>
 
-<link rel="stylesheet" href="styles.css">
-<!-- PapaParse -->
 <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
 body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
 .layout { display:flex; min-height:100vh; }
-
 .content { flex:1; padding:24px; background:white; }
 
 .controls select { padding:6px; margin-right:10px; }
 .matrix-title { margin:10px 0; font-weight:bold; }
 
-/* ===== Cards ===== */
 .cards { display:flex; gap:12px; margin:12px 0; }
-.card {
-  flex:1; padding:12px; border-radius:8px;
-  font-size:14px; border:1px solid #e5e7eb;
-}
+.card { flex:1; padding:12px; border-radius:8px; border:1px solid #e5e7eb; }
 .card b { display:block; margin-bottom:6px; }
 .card.gray { background:#e5e7eb; color:#374151; }
 .card.low { background:#43a047; color:white; }
@@ -30,16 +23,9 @@ body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
 .card.high { background:#e53935; color:white; }
 
 .matrix-wrapper { position:relative; max-width:900px; }
-.matrix {
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:2px;
-}
+.matrix { display:grid; grid-template-columns:repeat(5,1fr); gap:2px; }
 .cell {
-  height:90px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  height:90px; display:flex; align-items:center; justify-content:center;
   font-weight:bold;
 }
 .low { background:#43a047; color:white; }
@@ -57,14 +43,16 @@ body { font-family: Arial, sans-serif; background:#f4f6f8; margin:0; }
 .star { font-size:26px; color:#8e24aa; }
 
 svg {
-  position:absolute; top:0; left:0;
-  width:100%; height:100%; pointer-events:none; z-index:2;
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  pointer-events:none; z-index:2;
 }
 
 .legend { margin-top:10px; font-size:14px; }
+
 .axis-box {
   margin-top:14px; padding:12px;
-  background:#ffffff; border-left:6px solid #1976d2;
+  background:#fff; border-left:6px solid #1976d2;
   font-size:14px; line-height:1.6;
 }
 .axis-box b { color:#0d47a1; }
@@ -73,24 +61,22 @@ svg {
 
 <body>
 <div class="layout">
-
 <div class="content">
 
 <h2>Risk Matrix</h2>
 
 <div class="controls">
-  RF:
-  <select id="rf"></select>
-  Quarter:
-  <select id="q">
-    <option value="Q1">Q1/2569</option>
-    <option value="Q2">Q2/2569</option>
-    <option value="Q3">Q3/2569</option>
-    <option value="Q4">Q4/2569</option>
-  </select>
+RF:
+<select id="rf"></select>
+Quarter:
+<select id="q">
+  <option value="Q1">Q1/2569</option>
+  <option value="Q2">Q2/2569</option>
+  <option value="Q3">Q3/2569</option>
+  <option value="Q4">Q4/2569</option>
+</select>
 </div>
 
-<!-- ✅ Cards -->
 <div class="cards">
   <div id="cardL" class="card gray">
     <b>Likelihood</b><span>-</span>
@@ -108,7 +94,8 @@ svg {
 <div class="matrix-wrapper">
 <svg id="svg">
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+    <marker id="arrow" markerWidth="10" markerHeight="10"
+      refX="10" refY="5" orient="auto">
       <polygon points="0,0 10,5 0,10" fill="#8e24aa"/>
     </marker>
   </defs>
@@ -128,7 +115,8 @@ svg {
 </div>
 
 <script>
-/* ===== Axis Meaning ===== */
+/* ================= Axis Meaning ================= */
+
 const axisMeaning = {
   RF1:{ likelihood:"ความสำเร็จการดำเนินงานตามแผนงานบริหารความเสี่ยง",
         impact:"ไม่สามารถสร้างมูลค่าเพิ่มในธุรกิจหลักได้ตามเป้าหมาย"},
@@ -141,9 +129,45 @@ const axisMeaning = {
   RF5:{ likelihood:"ความสำเร็จการดำเนินงานตามแผนงานบริหารความเสี่ยง",
         impact:"ไม่สามารถพัฒนาทักษะดิจิทัล / AI ได้ตามเกณฑ์"},
   RF6:{ likelihood:"ความสำเร็จการดำเนินงานตามแผนงานบริหารความเสี่ยง",
-        impact:"ไม่สามารถบริหารค่า SAIFI / SAIDI ได้ตามเป้าหมาย"}
+        impact:"ไม่สามารถบริหารค่า SAIFI / SAIDI ได้ตามเป้าหมาย"},
+
+  "ย":{ likelihood:"ความสำเร็จของแผนตอบสนองปัจจัยเสี่ยง (Risk Response)",
+       impact:"ขยายผลใช้งานระบบที่นำ AI มาประยุกต์ใช้ได้ทั่วประเทศ"},
+  "ธต":{ likelihood:"ดำเนินการตามแผนพัฒนาโมเดลธุรกิจ",
+          impact:"ผลการพัฒนาโมเดลธุรกิจเป็นไปตามแผน"},
+  "วว1":{ likelihood:"ความสำเร็จของแผนตอบสนองปัจจัยเสี่ยง",
+           impact:"มีผลกระทบต่อองค์กร"},
+  "วว2":{ likelihood:"ความสำเร็จของแผนตอบสนองปัจจัยเสี่ยง",
+           impact:"มีผลกระทบต่อองค์กร"},
+  "ป":{ likelihood:"ดำเนินการตามแผนควบคุมได้ครบถ้วน",
+        impact:"ค่าเกณฑ์วัด BSC"},
+  "ดส1":{ likelihood:"ปัญหากระบวนการจัดซื้อจัดจ้าง",
+           impact:"เบิกจ่ายงบลงทุนได้ตามเป้า"},
+  "ดส2":{ likelihood:"ความสำเร็จแผนกิจกรรมควบคุม",
+           impact:"ผ่านการตรวจสอบช่องโหว่"},
+  "บ":{ likelihood:"การเบิกจ่ายงบลงทุน",
+        impact:"การเบิกจ่ายจริงในช่วงปี"},
+  "บก1":{ likelihood:"ดำเนินงานตามแผนครบถ้วน",
+          impact:"ค่าดัชนีการประสบอุบัติเหตุ (DI)"},
+  "บก2":{ likelihood:"ทบทวนโครงการ PEA Academy",
+          impact:"โครงสร้างหน่วยงานสอดคล้องแผน HR"},
+  "ล":{ likelihood:"พัสดุคงคลังไม่มีการเคลื่อนไหว",
+        impact:"ต้นทุนโลจิสติกส์สูง"},
+  "น":{ likelihood:"ดำเนินงานตามแผนบริหารความเสี่ยง",
+        impact:"ค่าเป้าหมายแผน ผวก."},
+  "ฉ":{ likelihood:"ความสำเร็จแผนตอบสนองความเสี่ยง",
+        impact:"ร้อยละการปิดงานก่อสร้าง (AUC)"},
+  "ก":{ likelihood:"เพิ่มประสิทธิภาพการเบิกจ่ายงบลงทุน",
+        impact:"บริหารแผนลงทุนได้ตามเป้า"},
+  "ต":{ likelihood:"บริหารสินทรัพย์และงบลงทุน",
+        impact:"แผนลงทุนภาคใต้ตามเป้าหมาย"},
+  "สตภ.":{ likelihood:"ควบคุมตามแผนครบถ้วน",
+            impact:"สร้างมูลค่าเพิ่มด้านการให้คำปรึกษา"},
+  "ฝลอ.":{ likelihood:"โอกาสไม่เข้าใจระเบียบเดินทาง ตปท.",
+            impact:"ความสำเร็จแผนสื่อสารความรู้"}
 };
 
+/* ================= Config ================= */
 const sheetUrl =
 "https://docs.google.com/spreadsheets/d/1J5MfU5JTDEazsGPEesa7u2oR-wRPI4wr8e5APKglEyw/export?format=csv&gid=523652456";
 
@@ -160,111 +184,134 @@ const cardS = document.getElementById("cardS");
 
 const clamp = v => Math.min(5, Math.max(1, v));
 const riskLevel = s => s <= 4 ? "low" : s <= 14 ? "medium" : "high";
+const isNum = v => Number.isFinite(v);
 
-/* ===== Cards ===== */
-function updateCards(d,q){
-  if(!hasQuarterData(d[q])){
+/* ✅ POSITION ที่รองรับ OFFSET */
+function pos(L, I, offset = 0){
+  return {
+    x: `calc(${(clamp(L)-.5)*20}% + ${offset}px)`,
+    y: `calc(${(5-clamp(I)+.5)*20}% + ${offset}px)`
+  };
+}
+
+let data=[];
+
+/* ================= Load Data ================= */
+Papa.parse(sheetUrl,{
+  download:true,
+  header:true,
+  skipEmptyLines:true,
+  complete(res){
+    data = res.data.map(r=>({
+      rf: r.RF_GroupName?.trim(),
+      pre:{ L:+r.L_pre, I:+r.I_pre },
+      post:{ L:+r.L_post, I:+r.I_post },
+      Q1:{ L:+r.L_Q1, I:+r.I_Q1 },
+      Q2:{ L:+r.L_Q2, I:+r.I_Q2 },
+      Q3:{ L:+r.L_Q3, I:+r.I_Q3 },
+      Q4:{ L:+r.L_Q4, I:+r.I_Q4 }
+    }));
+
+    rfSel.innerHTML =
+      `<option value="ALL">ALL</option>` +
+      [...new Set(data.map(d=>d.rf))]
+        .map(x=>`<option value="${x}">${x}</option>`).join("");
+
+    render();
+  }
+});
+
+/* ================= Matrix ================= */
+function drawMatrix(){
+  matrix.innerHTML="";
+  svg.innerHTML = svg.innerHTML.split("</defs>")[0]+"</defs>";
+
+  for(let y=5;y>=1;y--){
+    for(let x=1;x<=5;x++){
+      const c=document.createElement("div");
+      c.className="cell "+riskLevel(x*y);
+      c.textContent=x*y;
+      matrix.appendChild(c);
+    }
+  }
+}
+
+/* ================= Cards ================= */
+function updateCards(d, q){
+  if(!d || !isNum(d[q]?.L) || !isNum(d[q]?.I)){
     [cardL,cardI,cardS].forEach(c=>{
       c.className="card gray";
       c.querySelector("span").textContent="-";
     });
     return;
   }
-  const L = +d[q].L;
-  const I = +d[q].I;
-  const S = L * I;
-  const lvl = riskLevel(S);
 
-  cardL.className = "card " + lvl;
-  cardL.querySelector("span").textContent = L;
+  const L=d[q].L, I=d[q].I, S=L*I;
+  const lvl=riskLevel(S);
 
-  cardI.className = "card " + lvl;
-  cardI.querySelector("span").textContent = I;
-
-  cardS.className = "card " + lvl;
-  cardS.querySelector("span").textContent = S;
+  cardL.className="card "+lvl; cardL.querySelector("span").textContent=L;
+  cardI.className="card "+lvl; cardI.querySelector("span").textContent=I;
+  cardS.className="card "+lvl; cardS.querySelector("span").textContent=S;
 }
 
-const hasQuarterData = q =>
-  q && q.L!=="" && q.I!=="" && !isNaN(q.L) && !isNaN(q.I);
-
-const pos = (L,I)=>({x:(clamp(L)-.5)*20,y:(5-clamp(I)+.5)*20});
-
-/* ===== Load Data ===== */
-let data=[];
-Papa.parse(sheetUrl,{
-  download:true, header:true, skipEmptyLines:true,
-  complete(res){
-    data=res.data.map(r=>({
-      rf:r.RF_GroupName,
-      pre:{L:+r.L_pre, I:+r.I_pre},
-      post:{L:+r.L_post, I:+r.I_post},
-      Q1:{L:r.L_Q1, I:r.I_Q1},
-      Q2:{L:r.L_Q2, I:r.I_Q2},
-      Q3:{L:r.L_Q3, I:r.I_Q3},
-      Q4:{L:r.L_Q4, I:r.I_Q4}
-    }));
-    rfSel.innerHTML =
-      `<option value="ALL">ALL</option>` +
-      [...new Set(data.map(d=>d.rf))]
-        .map(x=>`<option value="${x}">${x}</option>`).join("");
-    render();
-  }
-});
-
-function drawMatrix(){
-  matrix.innerHTML="";
-  svg.innerHTML = svg.innerHTML.split("</defs>")[0]+"</defs>";
-  for(let y=5;y>=1;y--)for(let x=1;x<=5;x++){
-    const c=document.createElement("div");
-    c.className="cell "+riskLevel(x*y); c.textContent=x*y;
-    matrix.appendChild(c);
-  }
-}
-
+/* ================= Render ================= */
 function render(){
   drawMatrix();
-  const rf=rfSel.value,q=qSel.value;
-  title.textContent=`${q}/2569 | ${rf==="ALL"?"ALL RF":rf}`;
 
-  if(rf==="ALL"){
-    axisBox.innerHTML =
-      "<b>Likelihood:</b> ความสำเร็จการดำเนินงานตามแผนบริหารความเสี่ยง<br>"+
-      "<b>Impact:</b> ผลกระทบต่อเป้าหมายเชิงยุทธศาสตร์องค์กร";
-  } else {
-    axisBox.innerHTML =
-      `<b>Likelihood:</b> ${axisMeaning[rf].likelihood}<br>`+
-      `<b>Impact:</b> ${axisMeaning[rf].impact}`;
-  }
+  const rf = rfSel.value;
+  const q = qSel.value;
 
-  data.filter(d=>rf==="ALL"||d.rf===rf).forEach((d,i)=>{
-    updateCards(d,q);
-    plot(d.pre.L,d.pre.I,'<div class="circle"></div>',i*4);
-    plot(d.post.L,d.post.I,'<div class="triangle"></div>',i*4+6);
-    if(hasQuarterData(d[q])){
-      drawArrow(pos(d.pre.L,d.pre.I),pos(d[q].L,d[q].I));
-      plot(d[q].L,d[q].I,'<div class="star">★</div>',i*4+14);
+  title.textContent = `${q}/2569 | ${rf==="ALL"?"ALL RF":rf}`;
+
+  axisBox.innerHTML = axisMeaning[rf]
+    ? `<b>Likelihood:</b> ${axisMeaning[rf].likelihood}<br>
+       <b>Impact:</b> ${axisMeaning[rf].impact}`
+    : `<b>Likelihood:</b> ความสำเร็จของการบริหารความเสี่ยง<br>
+       <b>Impact:</b> ผลกระทบต่อเป้าหมายองค์กร`;
+
+  const filtered = data.filter(d=>rf==="ALL"||d.rf===rf);
+  if(filtered.length) updateCards(filtered[0], q);
+
+  filtered.forEach((d,i)=>{
+    const offPre = i*4;
+    const offPost = i*4+6;
+    const offQ = i*4+14;
+
+    if(isNum(d.pre.L)&&isNum(d.pre.I))
+      plot(d.pre.L,d.pre.I,'<div class="circle"></div>',offPre);
+
+    if(isNum(d.post.L)&&isNum(d.post.I))
+      plot(d.post.L,d.post.I,'<div class="triangle"></div>',offPost);
+
+    if(isNum(d[q]?.L)&&isNum(d[q]?.I)){
+      plot(d[q].L,d[q].I,'<div class="star">★</div>',offQ);
+      drawArrow(
+        pos(d.pre.L,d.pre.I,offPre),
+        pos(d[q].L,d[q].I,offQ)
+      );
     }
   });
 }
 
+/* ================= Helpers ================= */
 function drawArrow(a,b){
   const l=document.createElementNS("http://www.w3.org/2000/svg","line");
-  l.setAttribute("x1",a.x+"%");
-  l.setAttribute("y1",a.y+"%");
-  l.setAttribute("x2",b.x+"%");
-  l.setAttribute("y2",b.y+"%");
+  l.setAttribute("x1",a.x);
+  l.setAttribute("y1",a.y);
+  l.setAttribute("x2",b.x);
+  l.setAttribute("y2",b.y);
   l.setAttribute("stroke","#8e24aa");
   l.setAttribute("stroke-width","3");
   l.setAttribute("marker-end","url(#arrow)");
   svg.appendChild(l);
 }
 
-function plot(L,I,h,o){
+function plot(L,I,html,offset){
   const p=document.createElement("div");
-  p.className="point"; p.innerHTML=h;
-  p.style.left=`calc(${(clamp(L)-.5)*20}% + ${o}px)`;
-  p.style.top=`calc(${(5-clamp(I)+.5)*20}% + ${o}px)`;
+  p.className="point";
+  p.innerHTML=html;
+  p.style.left = `calc(${(clamp(L)-.5)*20}% + ${offset}px)`;
+  p.style.top  = `calc(${(5-clamp(I)+.5)*20}% + ${offset}px)`;
   matrix.appendChild(p);
 }
 
